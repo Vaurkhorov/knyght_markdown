@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tauri App</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+
+  <body>
+    <div class="root">
+      <div class="container">
+        <textarea id="editor" class="text-holder" aria-label="markdown editor area"></textarea>
+      </div>
+      <div class="container">
+        <div id="canvas" class="text-holder">
+          <p class="placeholder">The preview will update automatically when you stop typing.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
