@@ -1,39 +1,38 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command(rename_all = "snake_case")]
-fn get_html_from_markdown(input: &str) -> String {
-    let mut output = String::new();
+mod error;
+mod plugin;
+
+use plugin::PluginManager;
+use std::sync::Mutex;
+use tauri::State;
+
+#[tauri::command]
+fn get_html_from_markdown(
+    state: State<Mutex<PluginManager>>,
+    input: &str,
+) -> Result<String, String> {
+    let mut output = vec![String::new()];
+
+    let mut plugin_manager = state
+        .inner()
+        .lock()
+        // This error should also be handled by the combined error log.
+        .map_err(|e| format!("Mutex error:\n{}", e))?;
+
     for line in input.split('\n') {
-        if line.chars().nth(0) == Some('#') {
-            let mut heading_type=5;
-            for i in 0..5 {
-                if line.chars().nth(i) != Some('#') {
-                    heading_type = i-1;
-                    break;
-                }
-            }
-            heading_type += 1;
-
-
-            output.push_str(format!(
-                "<h{}>{}</h{}>",
-                heading_type,
-                line[heading_type..].to_string(),
-                heading_type
-            ).as_str());
-            continue;
-        } else {
-            output.push_str(format!("<p>{}</p>", line).as_str())
-        }
+        let mut line = line.to_owned();
+        plugin_manager.execute_line_functions(&mut line);
+        output.push(line);
     }
 
-    output
+    Ok(output.join("\n"))
 }
 
 fn main() {
     tauri::Builder::default()
+        .manage(Mutex::new(PluginManager::new()))
         .invoke_handler(tauri::generate_handler![get_html_from_markdown])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
